@@ -308,8 +308,33 @@ font-size: 0.8rem;
 </div>
 </div>
 
+<!-- Department Letter Modal -->
+<div id="departmentLetterModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal('departmentLetterModal')">&times;</span>
+<h2>📝 Generate Department-Specific Posting Letter</h2>
+<div id="departmentLetterInternInfo" style="background: #e8f8ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+<!-- Intern info will be displayed here -->
+</div>
+<div class="form-group" style="margin: 20px 0;">
+<label style="font-size: 1.1em; margin-bottom: 10px; display: block;">Select Department *</label>
+<select id="departmentLetterSelect" style="width: 100%; padding: 12px; font-size: 1em;" onchange="updateDepartmentLetterPreview()">
+<option value="">-- Select a Department --</option>
+</select>
+</div>
+<div id="departmentLetterPreview" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; display: none;">
+<!-- Preview will be shown here -->
+</div>
+<div style="text-align: center; margin-top: 20px;">
+<button class="btn btn-success" onclick="generateDepartmentLetter()" id="generateDeptLetterBtn" disabled>📄 Generate Letter</button>
+<button class="btn btn-secondary" onclick="closeModal('departmentLetterModal')">Cancel</button>
+</div>
+</div>
+</div>
+
 <script>
 let interns = JSON.parse(localStorage.getItem('internData') || '[]');
+let currentInternForDeptLetter = null;
 const adminCreds = {
 'admin': { password: 'admin2025', role: 'Administrator' },
 'medsup': { password: 'ms2025', role: 'Medical Superintendent' },
@@ -915,7 +940,8 @@ ${intern.postings.length > 5 ? `<div style="text-align: center; color: #7f8c8d; 
 <div class="action-buttons">
 <button class="btn btn-primary" onclick="generateIndividualChart(${intern.id})">📊 Individual Chart</button>
 <button class="btn btn-success" onclick="generateCalendar(${intern.id})">📅 Calendar</button>
-<button class="btn btn-warning" onclick="generatePostingLetter(${intern.id})">📄 Posting Letter</button>
+<button class="btn btn-warning" onclick="generatePostingLetter(${intern.id})">📄 Complete Posting Letter</button>
+<button class="btn btn-secondary" onclick="showDepartmentLetterModal(${intern.id})">📝 Department Letter</button>
 <button class="btn btn-danger" onclick="deleteIntern(${intern.id})">🗑️ Delete</button>
 </div>
 </div>
@@ -1029,8 +1055,291 @@ alert('⚠️ No postings found for this intern');
 return;
 }
 const html = generatePostingLetterHTML(intern);
-downloadFile(html, `Posting_Letter_${intern.name.replace(/\s/g, '_')}.html`);
-alert('✅ Posting letter with training details generated!');
+downloadFile(html, `Complete_Posting_Letter_${intern.name.replace(/\s/g, '_')}.html`);
+alert('✅ Complete posting letter with all departments generated!');
+}
+
+function showDepartmentLetterModal(internId) {
+const intern = interns.find(i => i.id === internId);
+if (!intern || !intern.postings.length) {
+alert('⚠️ No postings found for this intern');
+return;
+}
+
+currentInternForDeptLetter = intern;
+
+// Display intern info
+document.getElementById('departmentLetterInternInfo').innerHTML = `
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+<div><strong>Intern Name:</strong> ${intern.name}</div>
+<div><strong>Registration No:</strong> ${intern.regNo}</div>
+<div><strong>Start Date:</strong> ${new Date(intern.startDate).toLocaleDateString('en-GB')}</div>
+<div><strong>Total Postings:</strong> ${intern.postings.length} departments</div>
+</div>
+`;
+
+// Populate department dropdown
+const select = document.getElementById('departmentLetterSelect');
+select.innerHTML = '<option value="">-- Select a Department --</option>';
+intern.postings.forEach((posting, index) => {
+const dept = departments.find(d => d.name === posting.department);
+const option = document.createElement('option');
+option.value = index;
+option.textContent = `${posting.department} (${dept ? dept.code : 'N/A'}) - ${new Date(posting.fromDate).toLocaleDateString('en-GB')} to ${new Date(posting.toDate).toLocaleDateString('en-GB')} [${posting.days} days]`;
+select.appendChild(option);
+});
+
+// Reset preview
+document.getElementById('departmentLetterPreview').style.display = 'none';
+document.getElementById('generateDeptLetterBtn').disabled = true;
+
+// Show modal
+document.getElementById('departmentLetterModal').style.display = 'block';
+}
+
+function updateDepartmentLetterPreview() {
+const select = document.getElementById('departmentLetterSelect');
+const selectedIndex = select.value;
+
+if (selectedIndex === '') {
+document.getElementById('departmentLetterPreview').style.display = 'none';
+document.getElementById('generateDeptLetterBtn').disabled = true;
+return;
+}
+
+const posting = currentInternForDeptLetter.postings[selectedIndex];
+const dept = departments.find(d => d.name === posting.department);
+const details = departmentDetails[posting.department];
+
+let previewHTML = `
+<h4 style="color: #2c3e50; margin-bottom: 15px;">📋 Letter Preview</h4>
+<div style="background: white; padding: 15px; border-left: 4px solid #3498db; margin: 10px 0;">
+<p><strong>Department:</strong> ${posting.department}</p>
+<p><strong>Code:</strong> ${dept ? dept.code : 'N/A'}</p>
+<p><strong>Duration:</strong> ${new Date(posting.fromDate).toLocaleDateString('en-GB')} to ${new Date(posting.toDate).toLocaleDateString('en-GB')}</p>
+<p><strong>Days:</strong> ${posting.days} days</p>
+</div>
+`;
+
+if (details) {
+previewHTML += `
+<div style="margin-top: 15px;">
+<p><strong>Learning Objectives:</strong> ${details.objectives.length} objectives</p>
+<p><strong>Skills to Acquire:</strong> ${details.skills.length} skills</p>
+</div>
+`;
+}
+
+document.getElementById('departmentLetterPreview').innerHTML = previewHTML;
+document.getElementById('departmentLetterPreview').style.display = 'block';
+document.getElementById('generateDeptLetterBtn').disabled = false;
+}
+
+function generateDepartmentLetter() {
+const select = document.getElementById('departmentLetterSelect');
+const selectedIndex = select.value;
+
+if (selectedIndex === '' || !currentInternForDeptLetter) {
+alert('⚠️ Please select a department');
+return;
+}
+
+const posting = currentInternForDeptLetter.postings[selectedIndex];
+const html = generateDepartmentLetterHTML(currentInternForDeptLetter, posting);
+const dept = departments.find(d => d.name === posting.department);
+const filename = `${posting.department.replace(/\s+/g, '_')}_Letter_${currentInternForDeptLetter.name.replace(/\s/g, '_')}.html`;
+downloadFile(html, filename);
+alert(`✅ Department posting letter for ${posting.department} generated!`);
+closeModal('departmentLetterModal');
+}
+
+function generateDepartmentLetterHTML(intern, posting) {
+const dept = departments.find(d => d.name === posting.department);
+const details = departmentDetails[posting.department];
+
+let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Department Posting Letter - ${posting.department}</title>
+<style>
+body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; }
+.letterhead { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2c3e50; padding-bottom: 20px; }
+.letterhead h1 { color: #2c3e50; font-size: 1.8em; margin: 10px 0; }
+.letterhead p { color: #7f8c8d; margin: 5px 0; }
+.ref-date { display: flex; justify-content: space-between; margin: 20px 0; font-weight: bold; }
+.subject { text-align: center; font-weight: bold; margin: 20px 0; text-decoration: underline; }
+.content { margin: 20px 0; text-align: justify; }
+.posting-box { background: #e3f2fd; border: 2px solid #3498db; padding: 20px; border-radius: 8px; margin: 20px 0; }
+.posting-box h3 { color: #2c3e50; margin: 0 0 15px 0; text-align: center; }
+.posting-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+.detail-item { background: white; padding: 10px; border-radius: 5px; }
+.detail-label { font-weight: bold; color: #2c3e50; }
+.objectives { margin: 25px 0; }
+.objectives h4 { color: #2c3e50; margin: 15px 0 10px 0; background: #f8f9fa; padding: 10px; border-left: 4px solid #3498db; }
+.objectives ul { margin: 10px 0 10px 20px; }
+.objectives li { margin: 8px 0; line-height: 1.5; }
+.important-box { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }
+.signature { margin-top: 60px; }
+.footer { margin-top: 40px; border-top: 2px solid #ddd; padding-top: 20px; }
+@media print { 
+  body { padding: 20px; }
+  .posting-box { page-break-inside: avoid; }
+}
+</style></head><body>
+
+<div class="letterhead">
+<h1>JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL</h1>
+<p>VARUR, KALABURAGI DISTRICT, KARNATAKA</p>
+<p>Affiliated to Rajiv Gandhi University of Health Sciences, Karnataka</p>
+<p>Email: jainagmayurvediccollege@gmail.com | Phone: +91-XXXXXXXXXX</p>
+</div>
+
+<div class="ref-date">
+<div>Ref No: JAIN-AGM/INTERN/${new Date().getFullYear()}/${intern.regNo}/${dept ? dept.code : 'DEPT'}</div>
+<div>Date: ${new Date().toLocaleDateString('en-GB')}</div>
+</div>
+
+<div class="content">
+<p><strong>To,</strong><br>
+<strong>${intern.name}</strong><br>
+Registration Number: <strong>${intern.regNo}</strong><br>
+Intern, BAMS Final Year</p>
+</div>
+
+<div class="subject">
+DEPARTMENT POSTING ORDER - ${posting.department}
+</div>
+
+<div class="content">
+<p>Dear ${intern.name.split(' ')[0]},</p>
+
+<p>This is to inform you that you have been posted to the <strong>${posting.department}</strong> for your rotatory internship training as per the approved internship schedule.</p>
+</div>
+
+<div class="posting-box">
+<h3>📋 POSTING DETAILS</h3>
+<div class="posting-details">
+<div class="detail-item">
+<span class="detail-label">Department:</span><br>
+${posting.department}
+</div>
+<div class="detail-item">
+<span class="detail-label">Department Code:</span><br>
+${dept ? dept.code : 'N/A'}
+</div>
+<div class="detail-item">
+<span class="detail-label">From Date:</span><br>
+${new Date(posting.fromDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+</div>
+<div class="detail-item">
+<span class="detail-label">To Date:</span><br>
+${new Date(posting.toDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+</div>
+<div class="detail-item">
+<span class="detail-label">Total Duration:</span><br>
+${posting.days} days
+</div>
+<div class="detail-item">
+<span class="detail-label">Reporting Time:</span><br>
+9:00 AM on the first day
+</div>
+</div>
+</div>
+
+<div class="content">
+<h3 style="color: #2c3e50; margin: 25px 0 15px 0;">TRAINING PROGRAM OVERVIEW</h3>
+<p>During your posting in the <strong>${posting.department}</strong>, you will undergo comprehensive training designed to develop your clinical competencies and professional skills in this specialty.</p>
+</div>`;
+
+if (details) {
+html += `
+<div class="objectives">
+<h4>🎯 LEARNING OBJECTIVES</h4>
+<p>By the end of this ${posting.days}-day posting, you should be able to:</p>
+<ul>
+${details.objectives.map(obj => `<li>${obj}</li>`).join('')}
+</ul>
+</div>
+
+<div class="objectives">
+<h4>🔧 SKILLS TO BE ACQUIRED</h4>
+<p>You are expected to develop proficiency in the following skills:</p>
+<ul>
+${details.skills.map(skill => `<li>${skill}</li>`).join('')}
+</ul>
+</div>`;
+}
+
+html += `
+<div class="objectives">
+<h4>📝 DUTIES AND RESPONSIBILITIES</h4>
+<ul>
+<li>Report to the Head of Department (HOD) on the first day of posting at 9:00 AM</li>
+<li>Maintain regular attendance and punctuality throughout the posting period</li>
+<li>Actively participate in ward rounds, OPD sessions, procedures, and academic activities</li>
+<li>Maintain a detailed log book with daily entries of clinical work and learning experiences</li>
+<li>Perform all assigned duties under the supervision of faculty members</li>
+<li>Attend all departmental meetings, case presentations, and journal clubs</li>
+<li>Follow all hospital protocols, safety guidelines, and infection control measures</li>
+<li>Treat patients with respect, empathy, and maintain complete confidentiality</li>
+<li>Complete all department-specific assignments and assessments</li>
+<li>Obtain HOD signature on your log book at the end of the posting period</li>
+</ul>
+</div>
+
+<div class="important-box">
+<h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ IMPORTANT INSTRUCTIONS</h4>
+<ul style="margin: 10px 0 10px 20px;">
+<li><strong>Dress Code:</strong> Professional attire with white apron and identity card mandatory</li>
+<li><strong>Attendance:</strong> Minimum 80% attendance required for completion certificate</li>
+<li><strong>Leave:</strong> Any leave must be approved by HOD and Medical Superintendent in advance</li>
+<li><strong>Assessment:</strong> You will be evaluated on clinical skills, knowledge, attitude, and professionalism</li>
+<li><strong>Completion:</strong> Obtain completion certificate and HOD signature before moving to next posting</li>
+</ul>
+</div>
+
+<div class="content">
+<h4 style="color: #2c3e50;">REPORTING INSTRUCTIONS:</h4>
+<ol style="margin: 10px 0 10px 20px;">
+<li>Report to the ${posting.department} on <strong>${new Date(posting.fromDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong> at 9:00 AM sharp</li>
+<li>Carry this posting letter, your log book, and identity card</li>
+<li>Meet with the HOD or department coordinator for orientation</li>
+<li>Obtain your duty schedule and posting guidelines from the department</li>
+<li>Familiarize yourself with department layout, staff, and protocols</li>
+</ol>
+
+<p style="margin-top: 20px;">This posting is an integral part of your internship training program. Your active participation and dedication will ensure maximum learning and skill development.</p>
+
+<p style="margin-top: 15px;">For any queries or concerns regarding this posting, please contact:</p>
+<ul style="margin: 10px 0 10px 20px;">
+<li><strong>Department HOD:</strong> ${posting.department}</li>
+<li><strong>Medical Superintendent Office:</strong> medsupt.jainagm@gmail.com</li>
+<li><strong>Academic Section:</strong> academic.jainagm@gmail.com</li>
+</ul>
+
+<p style="margin-top: 20px;">We wish you a productive and enriching learning experience during your posting at ${posting.department}.</p>
+</div>
+
+<div class="signature">
+<p><strong>For Jain AGM Ayurvedic Medical College & Hospital</strong></p>
+<br><br>
+<p>_______________________________</p>
+<p><strong>Medical Superintendent</strong></p>
+<p>Jain AGM Ayurvedic Medical College & Hospital</p>
+<br>
+<p style="margin-top: 20px;">_______________________________</p>
+<p><strong>Head of Department</strong></p>
+<p>${posting.department}</p>
+</div>
+
+<div class="footer">
+<p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
+This is an official posting order. Please retain this letter for your records.<br>
+<strong>Posting Duration:</strong> ${new Date(posting.fromDate).toLocaleDateString('en-GB')} to ${new Date(posting.toDate).toLocaleDateString('en-GB')} (${posting.days} days)
+</p>
+</div>
+
+</body></html>`;
+
+return html;
 }
 
 function generatePostingLetterHTML(intern) {
