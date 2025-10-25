@@ -316,20 +316,20 @@ const adminCreds = {
 'principal': { password: 'prin2025', role: 'Principal' }
 };
 
-// 18 Departments with exact durations (Total: 365 days) - CORRECTED
+// 18 Departments with exact durations (Total: 365 days) - FINAL
 const departments = [
-{ name: 'KAYACHIKITSA', code: 'KC', days: 40 },  // Reduced from 45 to 40
+{ name: 'KAYACHIKITSA', code: 'KC', days: 45 },  // Increased back to 45
 { name: 'SWASTHAVRITTA', code: 'SW', days: 15 },
 { name: 'SHALYA TANTRA', code: 'ST', days: 30 },
 { name: 'SHALAKYA TANTRA', code: 'SKT', days: 15 },
 { name: 'PRASUTI TANTRA & STREE ROGA', code: 'PTSR', days: 15 },
 { name: 'KAUMARABHRITYA', code: 'KB', days: 15 },
-{ name: 'PANCHAKARMA', code: 'PK', days: 30 },
+{ name: 'PANCHAKARMA', code: 'PK', days: 35 },  // Increased to 35
 { name: 'AGADA TANTRA', code: 'AT', days: 15 },
 { name: 'ATYAYIKA', code: 'ATY', days: 15 },
 { name: 'LABORATORY', code: 'LAB', days: 15 },
 { name: 'SCREENING OPD', code: 'SCR', days: 15 },
-{ name: 'PHARMACY', code: 'PHM', days: 25 },
+{ name: 'PHARMACY', code: 'PHM', days: 15 },  // Reduced to 15
 { name: 'AYUSH', code: 'AYU', days: 30 },
 { name: 'PHYSIOTHERAPY', code: 'PHYSIO', days: 15 },
 { name: 'SPARSHA PEDIATRIC HOSPITAL', code: 'SPH', days: 15 },
@@ -337,6 +337,320 @@ const departments = [
 { name: 'CANCER HOSPITAL', code: 'CANC', days: 15 },
 { name: 'SURGICAL & MATERNITY HOSPITAL', code: 'SMH', days: 30 }
 ];
+
+// Department-specific training objectives and expectations
+const departmentDetails = {
+  'KAYACHIKITSA': {
+    objectives: [
+      'Diagnosis and management of common medical disorders',
+      'Patient history taking and clinical examination skills',
+      'Understanding of Ayurvedic diagnostic principles (Nadi, Mutra, Mala Pareeksha)',
+      'Management of chronic diseases like diabetes, hypertension, arthritis',
+      'Panchakarma preparation and follow-up care',
+      'Indoor patient management and documentation'
+    ],
+    skills: [
+      'Clinical examination techniques',
+      'Case history documentation',
+      'Treatment planning',
+      'Patient counseling',
+      'Dietary recommendations',
+      'Lifestyle modifications'
+    ]
+  },
+  'SWASTHAVRITTA': {
+    objectives: [
+      'Understanding of preventive and social medicine',
+      'Health education and community outreach programs',
+      'Personal and environmental hygiene practices',
+      'Seasonal regimen (Ritucharya) counseling',
+      'Daily regimen (Dinacharya) implementation'
+    ],
+    skills: [
+      'Health awareness campaigns',
+      'Community health assessments',
+      'Yoga and meditation guidance',
+      'Nutritional counseling'
+    ]
+  },
+  'SHALYA TANTRA': {
+    objectives: [
+      'Pre-operative and post-operative care',
+      'Wound management and dressing techniques',
+      'Ksharasutra therapy application',
+      'Minor surgical procedures',
+      'Management of ano-rectal disorders',
+      'Burn and trauma care'
+    ],
+    skills: [
+      'Sterile techniques',
+      'Suturing and wound closure',
+      'Bandaging methods',
+      'Instrument handling',
+      'Patient positioning'
+    ]
+  },
+  'SHALAKYA TANTRA': {
+    objectives: [
+      'ENT and ophthalmology examination',
+      'Management of common eye, ear, nose, and throat disorders',
+      'Netra Kriyakalpa (ocular therapeutic procedures)',
+      'Karna Purana, Nasya administration',
+      'Vision and hearing assessments'
+    ],
+    skills: [
+      'Ophthalmoscopy',
+      'Otoscopy',
+      'Nasal examination',
+      'Eye drops and ear drops administration',
+      'Throat examination'
+    ]
+  },
+  'PRASUTI TANTRA & STREE ROGA': {
+    objectives: [
+      'Antenatal care and examination',
+      'Normal delivery assistance',
+      'Postnatal care management',
+      'Management of gynecological disorders',
+      'Family planning counseling',
+      'Menstrual disorder management'
+    ],
+    skills: [
+      'Obstetric examination',
+      'Fetal heart monitoring',
+      'Yoni Prakshalanam',
+      'Uttarbasti procedures',
+      'Breast feeding support'
+    ]
+  },
+  'KAUMARABHRITYA': {
+    objectives: [
+      'Pediatric examination and growth monitoring',
+      'Immunization schedule implementation',
+      'Management of common childhood diseases',
+      'Nutritional assessment in children',
+      'Developmental milestone monitoring',
+      'Neonatal care'
+    ],
+    skills: [
+      'Pediatric vital signs monitoring',
+      'Growth chart plotting',
+      'Infant feeding counseling',
+      'Basic pediatric procedures',
+      'Parent education'
+    ]
+  },
+  'PANCHAKARMA': {
+    objectives: [
+      'Understanding of Panchakarma procedures and their indications',
+      'Vamana, Virechana, Basti, Nasya, Raktamokshana administration',
+      'Poorvakarma (Snehana and Swedana) procedures',
+      'Patient assessment for Panchakarma suitability',
+      'Post-Panchakarma care (Samsarjana Krama)',
+      'Documentation of Panchakarma procedures'
+    ],
+    skills: [
+      'Abhyanga (therapeutic massage)',
+      'Swedana (sudation therapy)',
+      'Basti administration',
+      'Nasya procedures',
+      'Oil preparation for therapies',
+      'Patient monitoring during procedures'
+    ]
+  },
+  'AGADA TANTRA': {
+    objectives: [
+      'Identification of poisoning cases',
+      'Management of acute poisoning',
+      'Snake bite and insect bite management',
+      'Food poisoning treatment',
+      'Medico-legal aspects of toxicology',
+      'Forensic examination procedures'
+    ],
+    skills: [
+      'Emergency management protocols',
+      'Stomach wash procedures',
+      'Antidote administration',
+      'Medico-legal documentation',
+      'Post-mortem examination assistance'
+    ]
+  },
+  'ATYAYIKA': {
+    objectives: [
+      'Emergency and casualty management',
+      'Triage and prioritization',
+      'Basic life support (BLS)',
+      'Management of trauma cases',
+      'Acute medical emergencies',
+      'First aid administration'
+    ],
+    skills: [
+      'CPR techniques',
+      'Emergency drug administration',
+      'IV line insertion',
+      'Oxygen therapy',
+      'Vital signs monitoring',
+      'Emergency documentation'
+    ]
+  },
+  'LABORATORY': {
+    objectives: [
+      'Collection of blood, urine, and stool samples',
+      'Basic laboratory investigation procedures',
+      'Interpretation of common lab reports',
+      'Microscopic examination techniques',
+      'Quality control in laboratory',
+      'Laboratory safety protocols'
+    ],
+    skills: [
+      'Venipuncture',
+      'Sample collection and handling',
+      'Urine analysis',
+      'Blood grouping',
+      'Hemoglobin estimation',
+      'Report interpretation'
+    ]
+  },
+  'SCREENING OPD': {
+    objectives: [
+      'Initial patient assessment and vital signs recording',
+      'Patient registration and documentation',
+      'Basic health screening procedures',
+      'Preliminary diagnosis and referral',
+      'Patient flow management',
+      'Health record maintenance'
+    ],
+    skills: [
+      'Blood pressure measurement',
+      'Temperature recording',
+      'Weight and height measurement',
+      'Patient interview techniques',
+      'Computer-based registration'
+    ]
+  },
+  'PHARMACY': {
+    objectives: [
+      'Identification of medicinal plants and drugs',
+      'Understanding of pharmaceutical procedures',
+      'Drug dispensing and labeling',
+      'Storage and preservation of medicines',
+      'Preparation of common Ayurvedic formulations',
+      'Pharmacy inventory management'
+    ],
+    skills: [
+      'Drug identification',
+      'Proper dispensing techniques',
+      'Dosage calculations',
+      'Medicine labeling',
+      'Patient counseling on drug use',
+      'Expiry date monitoring'
+    ]
+  },
+  'AYUSH': {
+    objectives: [
+      'Integration of different AYUSH systems',
+      'Understanding of Yoga, Naturopathy, Unani, Siddha',
+      'Holistic patient care approach',
+      'Complementary therapy administration',
+      'Documentation of AYUSH treatments'
+    ],
+    skills: [
+      'Yoga therapy techniques',
+      'Naturopathy procedures',
+      'Integrative medicine approach',
+      'Patient assessment',
+      'Treatment planning'
+    ]
+  },
+  'PHYSIOTHERAPY': {
+    objectives: [
+      'Assessment of musculoskeletal disorders',
+      'Physiotherapy treatment planning',
+      'Exercise therapy prescription',
+      'Rehabilitation protocols',
+      'Electrotherapy applications',
+      'Mobility and gait training'
+    ],
+    skills: [
+      'Manual therapy techniques',
+      'Exercise demonstration',
+      'Electrical modalities use',
+      'Patient mobilization',
+      'Home exercise program design'
+    ]
+  },
+  'SPARSHA PEDIATRIC HOSPITAL': {
+    objectives: [
+      'Advanced pediatric care exposure',
+      'Management of complex pediatric cases',
+      'NICU and PICU procedures',
+      'Pediatric emergency management',
+      'Specialized pediatric investigations',
+      'Multidisciplinary pediatric care'
+    ],
+    skills: [
+      'Advanced pediatric examination',
+      'Pediatric emergency protocols',
+      'Neonatal resuscitation',
+      'Pediatric IV access',
+      'Ventilator basics'
+    ]
+  },
+  'AGARWAL EYE HOSPITAL': {
+    objectives: [
+      'Comprehensive eye examination',
+      'Management of common eye diseases',
+      'Pre and post-operative eye care',
+      'Cataract surgery assistance',
+      'Refraction and vision testing',
+      'Eye emergency management'
+    ],
+    skills: [
+      'Visual acuity testing',
+      'Slit lamp examination',
+      'Tonometry',
+      'Fundoscopy',
+      'Eye drop administration',
+      'Post-operative care'
+    ]
+  },
+  'CANCER HOSPITAL': {
+    objectives: [
+      'Understanding of oncology basics',
+      'Cancer patient care and counseling',
+      'Palliative care principles',
+      'Chemotherapy assistance',
+      'Pain management in cancer',
+      'Psychological support to cancer patients'
+    ],
+    skills: [
+      'Cancer patient assessment',
+      'Supportive care techniques',
+      'Pain assessment tools',
+      'Nutritional support',
+      'Family counseling',
+      'End-of-life care'
+    ]
+  },
+  'SURGICAL & MATERNITY HOSPITAL': {
+    objectives: [
+      'Advanced surgical care exposure',
+      'Major surgical procedures assistance',
+      'Obstetric emergency management',
+      'High-risk pregnancy care',
+      'Operation theatre protocols',
+      'Post-operative intensive care'
+    ],
+    skills: [
+      'Surgical scrubbing techniques',
+      'Assisting in major surgeries',
+      'Labor room management',
+      'Cesarean section assistance',
+      'Post-operative monitoring',
+      'Surgical instrument identification'
+    ]
+  }
+};
 
 function switchView(view) {
 document.getElementById('adminViewBtn').classList.toggle('active', view === 'admin');
@@ -601,6 +915,7 @@ ${intern.postings.length > 5 ? `<div style="text-align: center; color: #7f8c8d; 
 <div class="action-buttons">
 <button class="btn btn-primary" onclick="generateIndividualChart(${intern.id})">📊 Individual Chart</button>
 <button class="btn btn-success" onclick="generateCalendar(${intern.id})">📅 Calendar</button>
+<button class="btn btn-warning" onclick="generatePostingLetter(${intern.id})">📄 Posting Letter</button>
 <button class="btn btn-danger" onclick="deleteIntern(${intern.id})">🗑️ Delete</button>
 </div>
 </div>
@@ -705,6 +1020,205 @@ return;
 const html = generateCalendarHTML([intern]);
 downloadFile(html, `Calendar_${intern.name.replace(/\s/g, '_')}.html`);
 alert('✅ Calendar generated!');
+}
+
+function generatePostingLetter(internId) {
+const intern = interns.find(i => i.id === internId);
+if (!intern || !intern.postings.length) {
+alert('⚠️ No postings found for this intern');
+return;
+}
+const html = generatePostingLetterHTML(intern);
+downloadFile(html, `Posting_Letter_${intern.name.replace(/\s/g, '_')}.html`);
+alert('✅ Posting letter with training details generated!');
+}
+
+function generatePostingLetterHTML(intern) {
+let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Internship Posting Letter - ${intern.name}</title>
+<style>
+body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; }
+.letterhead { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2c3e50; padding-bottom: 20px; }
+.letterhead h1 { color: #2c3e50; font-size: 1.8em; margin: 10px 0; }
+.letterhead p { color: #7f8c8d; margin: 5px 0; }
+.ref-date { display: flex; justify-content: space-between; margin: 20px 0; font-weight: bold; }
+.subject { text-align: center; font-weight: bold; margin: 20px 0; text-decoration: underline; }
+.content { margin: 20px 0; text-align: justify; }
+.posting-section { margin: 30px 0; page-break-inside: avoid; }
+.posting-header { background: #3498db; color: white; padding: 12px; border-radius: 5px; margin: 20px 0 10px 0; }
+.posting-details { background: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; margin: 10px 0; }
+.posting-dates { font-weight: bold; color: #2c3e50; margin: 10px 0; }
+.objectives { margin: 15px 0; }
+.objectives h4 { color: #2c3e50; margin: 10px 0; }
+.objectives ul { margin: 5px 0 5px 20px; }
+.objectives li { margin: 5px 0; }
+.summary-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+.summary-table th, .summary-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+.summary-table th { background: #3498db; color: white; }
+.footer { margin-top: 50px; }
+.signature { margin-top: 60px; }
+@media print { 
+  body { padding: 20px; }
+  .no-print { display: none; }
+  .posting-section { page-break-inside: avoid; }
+}
+</style></head><body>
+
+<div class="letterhead">
+<h1>JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL</h1>
+<p>VARUR, KALABURAGI DISTRICT, KARNATAKA</p>
+<p>Affiliated to Rajiv Gandhi University of Health Sciences, Karnataka</p>
+<p>Email: jainagmayurvediccollege@gmail.com | Phone: +91-XXXXXXXXXX</p>
+</div>
+
+<div class="ref-date">
+<div>Ref No: JAIN-AGM/INTERN/${new Date().getFullYear()}/${intern.regNo}</div>
+<div>Date: ${new Date().toLocaleDateString('en-GB')}</div>
+</div>
+
+<div class="content">
+<p><strong>To,</strong><br>
+<strong>${intern.name}</strong><br>
+Registration Number: <strong>${intern.regNo}</strong><br>
+Intern, BAMS Final Year</p>
+</div>
+
+<div class="subject">
+SUBJECT: INTERNSHIP POSTING SCHEDULE AND TRAINING GUIDELINES
+</div>
+
+<div class="content">
+<p>Dear ${intern.name.split(' ')[0]},</p>
+
+<p>Greetings from Jain AGM Ayurvedic Medical College & Hospital!</p>
+
+<p>We are pleased to inform you about your complete internship posting schedule for the compulsory rotatory internship of <strong>365 days</strong>, commencing from <strong>${new Date(intern.startDate).toLocaleDateString('en-GB')}</strong>.</p>
+
+<p>This internship is designed to provide you with comprehensive clinical exposure across all departments of Ayurveda and allied specialties. You are expected to actively participate in patient care, develop clinical skills, and gain hands-on experience under the guidance of faculty members.</p>
+
+<p><strong>Your Complete Posting Schedule:</strong></p>
+</div>
+
+<table class="summary-table">
+<thead>
+<tr>
+<th style="width: 50px;">S.No</th>
+<th>Department</th>
+<th>Code</th>
+<th>From Date</th>
+<th>To Date</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody>`;
+
+intern.postings.forEach((posting, idx) => {
+const dept = departments.find(d => d.name === posting.department);
+html += `
+<tr>
+<td style="text-align: center;">${idx + 1}</td>
+<td><strong>${posting.department}</strong></td>
+<td><strong>${dept ? dept.code : 'N/A'}</strong></td>
+<td>${new Date(posting.fromDate).toLocaleDateString('en-GB')}</td>
+<td>${new Date(posting.toDate).toLocaleDateString('en-GB')}</td>
+<td style="text-align: center;">${posting.days} days</td>
+</tr>`;
+});
+
+html += `
+<tr style="background: #f8f9fa; font-weight: bold;">
+<td colspan="5" style="text-align: right;">TOTAL DURATION:</td>
+<td style="text-align: center; color: #27ae60;">${intern.totalDays} days</td>
+</tr>
+</tbody>
+</table>
+
+<div class="content">
+<h3 style="color: #2c3e50; margin: 30px 0 20px 0;">DEPARTMENT-WISE TRAINING OBJECTIVES AND EXPECTED COMPETENCIES</h3>
+<p>During your posting in each department, you are expected to achieve the following learning objectives and develop the specified skills:</p>
+</div>`;
+
+// Add detailed objectives for each department
+intern.postings.forEach((posting, idx) => {
+const details = departmentDetails[posting.department];
+if (details) {
+html += `
+<div class="posting-section">
+<div class="posting-header">
+<strong>${idx + 1}. ${posting.department} (${posting.days} days)</strong>
+</div>
+<div class="posting-dates">
+📅 Duration: ${new Date(posting.fromDate).toLocaleDateString('en-GB')} to ${new Date(posting.toDate).toLocaleDateString('en-GB')}
+</div>
+<div class="objectives">
+<h4>Learning Objectives:</h4>
+<ul>
+${details.objectives.map(obj => `<li>${obj}</li>`).join('')}
+</ul>
+</div>
+<div class="objectives">
+<h4>Skills to be Acquired:</h4>
+<ul>
+${details.skills.map(skill => `<li>${skill}</li>`).join('')}
+</ul>
+</div>
+</div>`;
+}
+});
+
+html += `
+<div class="content" style="margin-top: 30px;">
+<h3 style="color: #2c3e50;">GENERAL INSTRUCTIONS FOR INTERNS:</h3>
+<ol style="margin: 15px 0 15px 20px;">
+<li>Report to the respective department on the first day of your posting by 9:00 AM</li>
+<li>Maintain professional attire and wear your identity card at all times</li>
+<li>Regular attendance and punctuality are mandatory</li>
+<li>Maintain a log book documenting your daily clinical activities and learning experiences</li>
+<li>Actively participate in ward rounds, OPD sessions, and procedures</li>
+<li>Treat all patients with respect, empathy, and maintain confidentiality</li>
+<li>Obtain faculty signatures on your log book at the end of each posting</li>
+<li>Appear for department assessments as scheduled</li>
+<li>Any leave of absence must be approved in advance by the Medical Superintendent</li>
+<li>Follow all hospital protocols, infection control measures, and safety guidelines</li>
+</ol>
+
+<p><strong>Assessment and Evaluation:</strong></p>
+<p>Your performance in each department will be evaluated based on:</p>
+<ul style="margin: 10px 0 10px 20px;">
+<li>Clinical knowledge and skills</li>
+<li>Professional attitude and behavior</li>
+<li>Regularity and punctuality</li>
+<li>Participation in academic activities</li>
+<li>Log book maintenance</li>
+<li>Department-specific assessments</li>
+</ul>
+
+<p style="margin-top: 20px;"><strong>Important Note:</strong> Successful completion of all department postings with satisfactory performance is mandatory for the award of the BAMS degree. Any shortage in attendance or unsatisfactory performance may result in extension of internship period.</p>
+
+<p style="margin-top: 20px;">We wish you a productive and enriching learning experience during your internship. Should you have any queries or concerns, please feel free to approach the Medical Superintendent's office or the respective Department Heads.</p>
+
+<p style="margin-top: 30px;">Best wishes for your internship!</p>
+</div>
+
+<div class="signature">
+<p><strong>For Jain AGM Ayurvedic Medical College & Hospital</strong></p>
+<br><br>
+<p>_______________________________</p>
+<p><strong>Medical Superintendent</strong></p>
+<p>Jain AGM Ayurvedic Medical College & Hospital</p>
+</div>
+
+<div class="footer">
+<hr style="margin: 30px 0;">
+<p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
+This is a computer-generated document and does not require a physical signature.<br>
+For any clarifications, please contact: Medical Superintendent Office | Email: medsupt.jainagm@gmail.com
+</p>
+</div>
+
+</body></html>`;
+
+return html;
 }
 
 function generateMasterCalendar() {
