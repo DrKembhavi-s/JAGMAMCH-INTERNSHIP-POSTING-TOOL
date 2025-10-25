@@ -256,6 +256,7 @@ font-size: 0.8rem;
 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
 <button class="btn btn-primary" onclick="generateMasterChart()">📊 Master Chart (All Interns)</button>
 <button class="btn btn-secondary" onclick="generateMasterCalendar()">📅 Master Calendar</button>
+<button class="btn btn-warning" onclick="debugInterns()">🔍 Debug Check</button>
 </div>
 <div class="intern-list" id="internList"></div>
 </div>
@@ -317,13 +318,13 @@ const adminCreds = {
 
 // 18 Departments with exact durations (Total: 365 days) - CORRECTED
 const departments = [
-{ name: 'KAYACHIKITSA', code: 'KC', days: 45 },
+{ name: 'KAYACHIKITSA', code: 'KC', days: 40 },  // Reduced from 45 to 40
 { name: 'SWASTHAVRITTA', code: 'SW', days: 15 },
 { name: 'SHALYA TANTRA', code: 'ST', days: 30 },
 { name: 'SHALAKYA TANTRA', code: 'SKT', days: 15 },
 { name: 'PRASUTI TANTRA & STREE ROGA', code: 'PTSR', days: 15 },
 { name: 'KAUMARABHRITYA', code: 'KB', days: 15 },
-{ name: 'PANCHAKARMA', code: 'PK', days: 30 },  // Changed from 35 to 30
+{ name: 'PANCHAKARMA', code: 'PK', days: 30 },
 { name: 'AGADA TANTRA', code: 'AT', days: 15 },
 { name: 'ATYAYIKA', code: 'ATY', days: 15 },
 { name: 'LABORATORY', code: 'LAB', days: 15 },
@@ -399,7 +400,18 @@ rows.forEach((row, index) => {
 const name = row.querySelector('.bulk-name').value.trim();
 const regNo = row.querySelector('.bulk-regno').value.trim();
 const startDate = row.querySelector('.bulk-date').value;
+
+console.log(`Row ${index + 1}: Name="${name}", RegNo="${regNo}", Date="${startDate}"`);
+
 if (name && regNo && startDate) {
+// Validate date format
+const dateTest = new Date(startDate);
+if (isNaN(dateTest.getTime())) {
+errors.push(`Row ${index + 1}: Invalid date format`);
+return;
+}
+
+// Check if registration number already exists
 if (interns.some(i => i.regNo === regNo)) {
 errors.push(`Row ${index + 1}: Registration number "${regNo}" already exists`);
 } else {
@@ -413,21 +425,25 @@ totalDays: 0,
 rotationGenerated: false
 });
 added++;
+console.log(`✓ Added: ${name}`);
 }
 } else if (name || regNo || startDate) {
 errors.push(`Row ${index + 1}: Please fill all fields (Name, Reg No, Date)`);
 }
 });
+
 if (errors.length > 0) {
 alert('⚠️ Some issues found:\n\n' + errors.join('\n'));
 }
+
 if (added > 0) {
 localStorage.setItem('internData', JSON.stringify(interns));
+console.log('Saved to localStorage. Total interns:', interns.length);
 updateStats();
 renderInterns();
 closeModal('bulkEntryModal');
 clearBulkForm();
-alert(`✅ Successfully added ${added} interns!${errors.length > 0 ? '\n\nNote: ' + errors.length + ' rows had issues (see above)' : ''}`);
+alert(`✅ Successfully added ${added} interns!${errors.length > 0 ? '\n\nNote: ' + errors.length + ' rows had issues (see above)' : ''}\n\nNext step: Click "🔄 Generate All Rotations" to create 365-day schedules.`);
 } else {
 if (errors.length === 0) {
 alert('⚠️ No valid data found. Please fill in:\n• Name\n• Registration Number\n• Start Date\n\nfor each intern you want to add.');
@@ -477,16 +493,35 @@ if (!confirm(`🔄 Generate automatic rotations for ${internsToGenerate.length} 
 return;
 }
 
+console.log('Starting rotation generation...');
+console.log('Total departments:', departments.length);
+console.log('Departments:', departments.map(d => `${d.code} (${d.days}d)`).join(', '));
+
 let generatedCount = 0;
 internsToGenerate.forEach((intern, internIndex) => {
+console.log(`\n=== Generating for ${intern.name} (Index: ${internIndex}) ===`);
+
+// Parse the start date properly
 const startDate = new Date(intern.startDate);
+if (isNaN(startDate.getTime())) {
+console.error(`Invalid start date for ${intern.name}: ${intern.startDate}`);
+alert(`⚠️ Invalid start date for ${intern.name}. Please check the date format.`);
+return;
+}
+
 let currentDate = new Date(startDate);
 intern.postings = [];
+
+// Create department order with offset for variety
 const deptOrder = shuffleWithOffset([...departments], internIndex);
+console.log('Department order:', deptOrder.map(d => d.code).join(' -> '));
+
+// Generate posting for each department
 deptOrder.forEach((dept, deptIndex) => {
 const fromDate = new Date(currentDate);
 const toDate = new Date(currentDate);
 toDate.setDate(toDate.getDate() + dept.days - 1);
+
 const posting = {
 id: Date.now() + internIndex * 10000 + deptIndex * 100 + Math.random(),
 department: dept.name,
@@ -494,16 +529,30 @@ fromDate: fromDate.toISOString().split('T')[0],
 toDate: toDate.toISOString().split('T')[0],
 days: dept.days
 };
+
 intern.postings.push(posting);
+console.log(`  ${deptIndex + 1}. ${dept.code}: ${posting.fromDate} to ${posting.toDate} (${dept.days} days)`);
+
+// Move to next department start date
 currentDate.setDate(currentDate.getDate() + dept.days);
 });
+
 intern.totalDays = intern.postings.reduce((sum, p) => sum + p.days, 0);
 intern.rotationGenerated = true;
 generatedCount++;
+
+console.log(`✓ Total postings: ${intern.postings.length}, Total days: ${intern.totalDays}`);
 });
 
+// Save to localStorage
 localStorage.setItem('internData', JSON.stringify(interns));
+console.log('Saved to localStorage');
+
+// Reload from localStorage to verify
 interns = JSON.parse(localStorage.getItem('internData') || '[]');
+console.log('Reloaded from localStorage');
+console.log('Verification:', interns.map(i => `${i.name}: ${i.postings.length} postings, ${i.totalDays} days`));
+
 updateStats();
 renderInterns();
 alert(`✅ SUCCESS! Generated rotations for ${generatedCount} interns!\n\n📊 Each intern now has:\n• Complete 365-day schedule\n• All 18 departments assigned\n• Total: ${interns[0]?.totalDays || 365} days\n\n📅 TO VIEW:\n1. Click "📊 Individual Chart" for table view\n2. Click "📅 Calendar" for month view\n3. Click "📊 Master Chart" for all interns`);
@@ -823,6 +872,33 @@ function updateStats() {
 document.getElementById('totalInterns').textContent = interns.length;
 document.getElementById('completedInterns').textContent = interns.filter(i => i.totalDays >= 365).length;
 document.getElementById('pendingInterns').textContent = interns.filter(i => i.totalDays < 365).length;
+}
+
+function debugInterns() {
+console.log('=== DEBUG INFO ===');
+console.log('Total interns:', interns.length);
+console.log('Departments:', departments.length);
+console.log('Department details:');
+let totalDays = 0;
+departments.forEach((d, i) => {
+console.log(`  ${i+1}. ${d.code} - ${d.name}: ${d.days} days`);
+totalDays += d.days;
+});
+console.log('Total days across all departments:', totalDays);
+console.log('\nIntern details:');
+interns.forEach((intern, i) => {
+console.log(`\n${i+1}. ${intern.name} (${intern.regNo})`);
+console.log(`   Start Date: ${intern.startDate}`);
+console.log(`   Rotation Generated: ${intern.rotationGenerated}`);
+console.log(`   Postings: ${intern.postings.length}`);
+console.log(`   Total Days: ${intern.totalDays}`);
+if (intern.postings.length > 0) {
+intern.postings.forEach((p, pi) => {
+console.log(`     ${pi+1}. ${p.department}: ${p.fromDate} to ${p.toDate} (${p.days} days)`);
+});
+}
+});
+alert(`Debug info logged to console (Press F12 to view)\n\nSummary:\n• Total Interns: ${interns.length}\n• Total Departments: ${departments.length}\n• Total Days: ${totalDays}\n\nCheck browser console for detailed logs.`);
 }
 
 function closeModal(id) {
