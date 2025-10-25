@@ -416,16 +416,17 @@
         function addBulkRows(count) {
             const container = document.getElementById('bulkEntryContainer');
             const currentRows = container.children.length;
+            const today = new Date().toISOString().split('T')[0];
             
             for (let i = 0; i < count && currentRows + i < 60; i++) {
                 const row = document.createElement('div');
                 row.className = 'bulk-entry-row';
                 row.innerHTML = `
-                    <div>${currentRows + i + 1}</div>
-                    <input type="text" placeholder="Name" class="bulk-name">
-                    <input type="text" placeholder="Reg Number" class="bulk-regno">
-                    <input type="date" class="bulk-date" value="${new Date().toISOString().split('T')[0]}">
-                    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding: 5px 10px;">×</button>
+                    <div style="font-weight: bold; color: #2c3e50;">${currentRows + i + 1}</div>
+                    <input type="text" placeholder="Enter intern name" class="bulk-name" style="padding: 10px; border: 2px solid #e1e8ed; border-radius: 5px;">
+                    <input type="text" placeholder="Enter reg number" class="bulk-regno" style="padding: 10px; border: 2px solid #e1e8ed; border-radius: 5px;">
+                    <input type="date" class="bulk-date" value="${today}" style="padding: 10px; border: 2px solid #e1e8ed; border-radius: 5px;">
+                    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding: 8px 12px;">×</button>
                 `;
                 container.appendChild(row);
             }
@@ -438,17 +439,24 @@
         function saveBulkInterns() {
             const rows = document.querySelectorAll('.bulk-entry-row');
             let added = 0;
+            const errors = [];
 
-            rows.forEach(row => {
+            rows.forEach((row, index) => {
                 const name = row.querySelector('.bulk-name').value.trim();
                 const regNo = row.querySelector('.bulk-regno').value.trim();
                 const startDate = row.querySelector('.bulk-date').value;
 
+                console.log(`Row ${index + 1}: Name="${name}", RegNo="${regNo}", Date="${startDate}"`);
+
                 if (name && regNo && startDate) {
-                    if (!interns.some(i => i.regNo === regNo)) {
+                    // Check if registration number already exists
+                    if (interns.some(i => i.regNo === regNo)) {
+                        errors.push(`Row ${index + 1}: Registration number "${regNo}" already exists`);
+                    } else {
                         interns.push({
-                            id: Date.now() + added,
-                            name, regNo,
+                            id: Date.now() + Math.random(),
+                            name, 
+                            regNo,
                             startDate,
                             postings: [],
                             totalDays: 0,
@@ -456,18 +464,27 @@
                         });
                         added++;
                     }
+                } else if (name || regNo || startDate) {
+                    // Row has some data but not complete
+                    errors.push(`Row ${index + 1}: Please fill all fields (Name, Reg No, Date)`);
                 }
             });
+
+            if (errors.length > 0) {
+                alert('⚠️ Some issues found:\n\n' + errors.join('\n'));
+            }
 
             if (added > 0) {
                 localStorage.setItem('internData', JSON.stringify(interns));
                 updateStats();
                 renderInterns();
                 closeModal('bulkEntryModal');
-                alert(`✅ Successfully added ${added} interns!`);
                 clearBulkForm();
+                alert(`✅ Successfully added ${added} interns!${errors.length > 0 ? '\n\nNote: ' + errors.length + ' rows had issues (see above)' : ''}`);
             } else {
-                alert('⚠️ No valid interns to add. Please fill in the required fields.');
+                if (errors.length === 0) {
+                    alert('⚠️ No valid data found. Please fill in:\n• Name\n• Registration Number\n• Start Date\n\nfor each intern you want to add.');
+                }
             }
         }
 
