@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -67,7 +67,7 @@
             border-radius: 8px;
             font-size: 1rem;
         }
-        input:focus, select:focus { outline: none; border-color: #3498db; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #3498db; }
         .btn {
             padding: 12px 25px;
             border: none;
@@ -81,14 +81,17 @@
         .btn-success { background: #27ae60; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-secondary { background: #95a5a6; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .section {
             background: #f8f9fa;
             border-radius: 10px;
             padding: 25px;
             margin-bottom: 25px;
+            border-left: 5px solid #3498db;
         }
-        .section h2 { color: #2c3e50; margin-bottom: 20px; }
+        .section h2 { color: #2c3e50; margin-bottom: 20px; font-size: 1.5rem; }
+        .section h2::before { content: "▶"; margin-right: 10px; color: #3498db; }
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -106,6 +109,12 @@
             border: 2px solid #e1e8ed;
             border-radius: 10px;
             padding: 20px;
+            transition: all 0.3s;
+        }
+        .intern-card:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
         .intern-name { font-weight: 700; color: #2c3e50; font-size: 1.1rem; }
         .posting-item {
@@ -129,11 +138,11 @@
         }
         .modal-content {
             background-color: white;
-            margin: 5% auto;
+            margin: 3% auto;
             padding: 30px;
             border-radius: 15px;
             width: 90%;
-            max-width: 800px;
+            max-width: 900px;
             max-height: 85vh;
             overflow-y: auto;
         }
@@ -145,9 +154,47 @@
             cursor: pointer;
         }
         .close:hover { color: #000; }
+        .bulk-entry-row {
+            display: grid;
+            grid-template-columns: 50px 2fr 2fr 2fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            background: #ecf0f1;
+            border-radius: 20px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 20px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .dept-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 2px;
+        }
         @media (max-width: 768px) {
             .form-grid, .login-form { grid-template-columns: 1fr; }
             .intern-list { grid-template-columns: 1fr; }
+            .bulk-entry-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -155,17 +202,17 @@
     <div class="container">
         <div class="header">
             <h1>JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL, VARUR</h1>
-            <p>INTERN POSTINGS DOCUMENTATION TOOL</p>
+            <p>SMART INTERN ROTATION & POSTINGS MANAGEMENT SYSTEM</p>
         </div>
 
         <div class="main-content">
             <div class="view-toggle">
-                <button id="adminViewBtn" class="active" onclick="switchView('admin')">Admin Login</button>
-                <button id="hodViewBtn" onclick="switchView('hod')">HOD Login</button>
+                <button id="adminViewBtn" class="active" onclick="switchView('admin')">Admin Portal</button>
+                <button id="hodViewBtn" onclick="switchView('hod')">HOD Portal</button>
             </div>
 
             <div id="adminLoginSection" class="login-section">
-                <h3 style="color: #3498db; margin-bottom: 15px;">Admin Login</h3>
+                <h3 style="color: #3498db; margin-bottom: 15px;">🔐 Admin Login</h3>
                 <div class="login-form">
                     <div class="form-group">
                         <label>Username</label>
@@ -181,7 +228,7 @@
             </div>
 
             <div id="hodLoginSection" class="login-section" style="display: none; background: #e8f5e8; border-color: #27ae60;">
-                <h3 style="color: #27ae60; margin-bottom: 15px;">HOD Login</h3>
+                <h3 style="color: #27ae60; margin-bottom: 15px;">🔐 HOD Login</h3>
                 <div class="login-form">
                     <div class="form-group">
                         <label>Username</label>
@@ -197,88 +244,111 @@
             </div>
 
             <div id="adminSections" style="display: none;">
+                <!-- Bulk Intern Entry -->
                 <div class="section">
-                    <h2>Add New Intern</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Intern Name *</label>
-                            <input type="text" id="internName">
-                        </div>
-                        <div class="form-group">
-                            <label>Registration Number *</label>
-                            <input type="text" id="internRegNo">
+                    <h2>📋 Bulk Intern Entry (Up to 60 Students)</h2>
+                    <p style="color: #7f8c8d; margin-bottom: 15px;">Add multiple interns at once. Each intern will get an auto-generated rotation schedule.</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn btn-success" onclick="showBulkEntryModal()">+ Add Multiple Interns</button>
+                        <button class="btn btn-primary" onclick="showSingleInternModal()">+ Add Single Intern</button>
+                        <button class="btn btn-warning" onclick="generateAllRotations()">🔄 Generate All Rotations</button>
+                    </div>
+
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <h4 style="color: #2c3e50; margin-bottom: 10px;">Quick Stats</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #3498db;" id="totalInterns">0</div>
+                                <div style="font-size: 0.9rem; color: #7f8c8d;">Total Interns</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #27ae60;" id="completedInterns">0</div>
+                                <div style="font-size: 0.9rem; color: #7f8c8d;">Completed (365d)</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: #fff3e0; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #f39c12;" id="pendingInterns">0</div>
+                                <div style="font-size: 0.9rem; color: #7f8c8d;">In Progress</div>
+                            </div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="addIntern()">Add Intern</button>
                 </div>
 
+                <!-- Manage Interns -->
                 <div class="section">
-                    <h2>Manage Interns</h2>
-                    <input type="text" id="searchIntern" placeholder="Search..." oninput="renderInterns()" style="width: 100%; max-width: 400px; margin-bottom: 20px;">
+                    <h2>👥 Manage Interns & Postings</h2>
+                    <input type="text" id="searchIntern" placeholder="🔍 Search by name or registration number..." oninput="renderInterns()" style="width: 100%; max-width: 400px; margin-bottom: 20px;">
+                    
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
-                        <button class="btn btn-success" onclick="exportAllData()">Export Data</button>
-                        <button class="btn btn-primary" onclick="importData()">Import Data</button>
+                        <button class="btn btn-success" onclick="exportAllData()">💾 Export All Data</button>
+                        <button class="btn btn-primary" onclick="importData()">📥 Import Data</button>
                         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
-                        <button class="btn btn-primary" onclick="generateMasterCalendar()">Generate Master Calendar</button>
+                        <button class="btn btn-primary" onclick="generateMasterChart()">📊 Master Chart (All Interns)</button>
+                        <button class="btn btn-secondary" onclick="generateMasterCalendar()">📅 Master Calendar</button>
                     </div>
+                    
                     <div class="intern-list" id="internList"></div>
                 </div>
             </div>
 
             <div id="hodSections" style="display: none;">
                 <div class="section">
-                    <h2>My Department Postings</h2>
+                    <h2>📋 My Department Postings</h2>
                     <div id="hodPostings"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="postingModal" class="modal">
+    <!-- Bulk Entry Modal -->
+    <div id="bulkEntryModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('postingModal')">&times;</span>
-            <h2>Add Department Posting</h2>
-            <div id="modalInfo" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>
+            <span class="close" onclick="closeModal('bulkEntryModal')">&times;</span>
+            <h2>📋 Bulk Intern Entry</h2>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Add up to 60 interns. Leave rows empty if you have fewer interns.</p>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="addBulkRows(10)">+ Add 10 Rows</button>
+                <button class="btn btn-secondary" onclick="clearBulkForm()">Clear All</button>
+            </div>
+
+            <div id="bulkEntryContainer" style="max-height: 400px; overflow-y: auto;"></div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveBulkInterns()">💾 Save All Interns</button>
+                <button class="btn btn-secondary" onclick="closeModal('bulkEntryModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single Intern Modal -->
+    <div id="singleInternModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('singleInternModal')">&times;</span>
+            <h2>+ Add Single Intern</h2>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Department *</label>
-                    <select id="postingDept">
-                        <option value="">Select Department</option>
-                        <option value="KAYACHIKITSA">KAYACHIKITSA (KC)</option>
-                        <option value="SHALYA TANTRA">SHALYA TANTRA (ST)</option>
-                        <option value="SHALAKYA TANTRA">SHALAKYA TANTRA (SKT)</option>
-                        <option value="PANCHAKARMA">PANCHAKARMA (PK)</option>
-                        <option value="PRASUTI TANTRA & STREE ROGA">PRASUTI TANTRA & STREE ROGA (PTSR)</option>
-                        <option value="KAUMARABHRITYA">KAUMARABHRITYA (KB)</option>
-                        <option value="SWASTHAVRITTA">SWASTHAVRITTA (SV)</option>
-                        <option value="LABORATORY">LABORATORY (LAB)</option>
-                        <option value="PHARMACY">PHARMACY (PHM)</option>
-                        <option value="ATYAYIKA">ATYAYIKA (ATY)</option>
-                        <option value="AYUSH">AYUSH (AYU)</option>
-                        <option value="SCREENING">SCREENING (SCR)</option>
-                        <option value="OTHER HOSPITALS">OTHER HOSPITALS (OTH)</option>
-                    </select>
+                    <label>Intern Name *</label>
+                    <input type="text" id="singleInternName">
                 </div>
                 <div class="form-group">
-                    <label>From Date *</label>
-                    <input type="date" id="postingFrom">
+                    <label>Registration Number *</label>
+                    <input type="text" id="singleInternRegNo">
                 </div>
                 <div class="form-group">
-                    <label>To Date *</label>
-                    <input type="date" id="postingTo">
+                    <label>Start Date *</label>
+                    <input type="date" id="singleInternStartDate">
                 </div>
             </div>
             <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="savePosting()">Save Posting</button>
-                <button class="btn btn-secondary" onclick="closeModal('postingModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSingleIntern()">Save Intern</button>
+                <button class="btn btn-secondary" onclick="closeModal('singleInternModal')">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
         let interns = JSON.parse(localStorage.getItem('internData') || '[]');
-        let currentInternId = null;
-        let currentHOD = null;
 
         const adminCreds = {
             'admin': { password: 'admin2025', role: 'Administrator' },
@@ -286,37 +356,27 @@
             'principal': { password: 'prin2025', role: 'Principal' }
         };
 
-        const hodCreds = {
-            'hodkc': { password: 'kc2025', dept: 'KAYACHIKITSA' },
-            'hodst': { password: 'st2025', dept: 'SHALYA TANTRA' },
-            'hodskt': { password: 'skt2025', dept: 'SHALAKYA TANTRA' },
-            'hodpk': { password: 'pk2025', dept: 'PANCHAKARMA' },
-            'hodptsr': { password: 'ptsr2025', dept: 'PRASUTI TANTRA & STREE ROGA' },
-            'hodkb': { password: 'kb2025', dept: 'KAUMARABHRITYA' },
-            'hodsv': { password: 'sv2025', dept: 'SWASTHAVRITTA' },
-            'hodlab': { password: 'lab2025', dept: 'LABORATORY' },
-            'hodphm': { password: 'phm2025', dept: 'PHARMACY' },
-            'hodaty': { password: 'aty2025', dept: 'ATYAYIKA' },
-            'hodayu': { password: 'ayu2025', dept: 'AYUSH' },
-            'hodscr': { password: 'scr2025', dept: 'SCREENING' },
-            'hodoth': { password: 'oth2025', dept: 'OTHER HOSPITALS' }
-        };
-
-        const deptCodes = {
-            'KAYACHIKITSA': 'KC',
-            'SHALYA TANTRA': 'ST',
-            'SHALAKYA TANTRA': 'SKT',
-            'PANCHAKARMA': 'PK',
-            'PRASUTI TANTRA & STREE ROGA': 'PTSR',
-            'KAUMARABHRITYA': 'KB',
-            'SWASTHAVRITTA': 'SV',
-            'LABORATORY': 'LAB',
-            'PHARMACY': 'PHM',
-            'ATYAYIKA': 'ATY',
-            'AYUSH': 'AYU',
-            'SCREENING': 'SCR',
-            'OTHER HOSPITALS': 'OTH'
-        };
+        // 18 Departments with exact durations (Total: 365 days)
+        const departments = [
+            { name: 'KAYACHIKITSA', code: 'KC', days: 45 },
+            { name: 'SWASTHAVRITTA', code: 'SW', days: 15 },
+            { name: 'SHALYA TANTRA', code: 'ST', days: 30 },
+            { name: 'SHALAKYA TANTRA', code: 'SKT', days: 15 },
+            { name: 'PRASUTI TANTRA & STREE ROGA', code: 'PTSR', days: 15 },
+            { name: 'KAUMARABHRITYA', code: 'KB', days: 15 },
+            { name: 'PANCHAKARMA', code: 'PK', days: 35 },
+            { name: 'AGADA TANTRA', code: 'AT', days: 15 },
+            { name: 'ATYAYIKA', code: 'ATY', days: 15 },
+            { name: 'LABORATORY', code: 'LAB', days: 15 },
+            { name: 'SCREENING OPD', code: 'SCR', days: 15 },
+            { name: 'PHARMACY', code: 'PHM', days: 25 },
+            { name: 'AYUSH', code: 'AYU', days: 30 },
+            { name: 'PHYSIOTHERAPY', code: 'PHYSIO', days: 15 },
+            { name: 'SPARSHA PEDIATRIC HOSPITAL', code: 'SPH', days: 15 },
+            { name: 'AGARWAL EYE HOSPITAL', code: 'AEH', days: 15 },
+            { name: 'CANCER HOSPITAL', code: 'CANC', days: 15 },
+            { name: 'SURGICAL & MATERNITY HOSPITAL', code: 'SMH', days: 30 }
+        ];
 
         function switchView(view) {
             document.getElementById('adminViewBtn').classList.toggle('active', view === 'admin');
@@ -335,55 +395,168 @@
             if (adminCreds[user] && adminCreds[user].password === pass) {
                 document.getElementById('adminLoginSection').style.display = 'none';
                 document.getElementById('adminSections').style.display = 'block';
+                updateStats();
                 renderInterns();
             } else {
-                err.textContent = 'Invalid credentials';
+                err.textContent = '❌ Invalid credentials';
                 err.style.display = 'block';
             }
         }
 
-        function hodLogin() {
-            const user = document.getElementById('hodUsername').value.trim();
-            const pass = document.getElementById('hodPassword').value.trim();
-            const err = document.getElementById('hodError');
+        function showBulkEntryModal() {
+            document.getElementById('bulkEntryModal').style.display = 'block';
+            addBulkRows(10);
+        }
 
-            if (hodCreds[user] && hodCreds[user].password === pass) {
-                currentHOD = hodCreds[user];
-                document.getElementById('hodLoginSection').style.display = 'none';
-                document.getElementById('hodSections').style.display = 'block';
-                renderHODPostings();
+        function showSingleInternModal() {
+            document.getElementById('singleInternModal').style.display = 'block';
+            document.getElementById('singleInternStartDate').valueAsDate = new Date();
+        }
+
+        function addBulkRows(count) {
+            const container = document.getElementById('bulkEntryContainer');
+            const currentRows = container.children.length;
+            
+            for (let i = 0; i < count && currentRows + i < 60; i++) {
+                const row = document.createElement('div');
+                row.className = 'bulk-entry-row';
+                row.innerHTML = `
+                    <div>${currentRows + i + 1}</div>
+                    <input type="text" placeholder="Name" class="bulk-name">
+                    <input type="text" placeholder="Reg Number" class="bulk-regno">
+                    <input type="date" class="bulk-date" value="${new Date().toISOString().split('T')[0]}">
+                    <button class="btn btn-danger" onclick="this.parentElement.remove()" style="padding: 5px 10px;">×</button>
+                `;
+                container.appendChild(row);
+            }
+        }
+
+        function clearBulkForm() {
+            document.getElementById('bulkEntryContainer').innerHTML = '';
+        }
+
+        function saveBulkInterns() {
+            const rows = document.querySelectorAll('.bulk-entry-row');
+            let added = 0;
+
+            rows.forEach(row => {
+                const name = row.querySelector('.bulk-name').value.trim();
+                const regNo = row.querySelector('.bulk-regno').value.trim();
+                const startDate = row.querySelector('.bulk-date').value;
+
+                if (name && regNo && startDate) {
+                    if (!interns.some(i => i.regNo === regNo)) {
+                        interns.push({
+                            id: Date.now() + added,
+                            name, regNo,
+                            startDate,
+                            postings: [],
+                            totalDays: 0,
+                            rotationGenerated: false
+                        });
+                        added++;
+                    }
+                }
+            });
+
+            if (added > 0) {
+                localStorage.setItem('internData', JSON.stringify(interns));
+                updateStats();
+                renderInterns();
+                closeModal('bulkEntryModal');
+                alert(`✅ Successfully added ${added} interns!`);
+                clearBulkForm();
             } else {
-                err.textContent = 'Invalid credentials';
-                err.style.display = 'block';
+                alert('⚠️ No valid interns to add. Please fill in the required fields.');
             }
         }
 
-        function addIntern() {
-            const name = document.getElementById('internName').value.trim();
-            const regNo = document.getElementById('internRegNo').value.trim();
+        function saveSingleIntern() {
+            const name = document.getElementById('singleInternName').value.trim();
+            const regNo = document.getElementById('singleInternRegNo').value.trim();
+            const startDate = document.getElementById('singleInternStartDate').value;
 
-            if (!name || !regNo) {
-                alert('Please fill all fields');
+            if (!name || !regNo || !startDate) {
+                alert('⚠️ Please fill all fields');
                 return;
             }
 
             if (interns.some(i => i.regNo === regNo)) {
-                alert('Registration number already exists');
+                alert('⚠️ Registration number already exists');
                 return;
             }
 
             interns.push({
                 id: Date.now(),
-                name, regNo,
+                name, regNo, startDate,
                 postings: [],
-                totalDays: 0
+                totalDays: 0,
+                rotationGenerated: false
             });
 
             localStorage.setItem('internData', JSON.stringify(interns));
-            document.getElementById('internName').value = '';
-            document.getElementById('internRegNo').value = '';
+            document.getElementById('singleInternName').value = '';
+            document.getElementById('singleInternRegNo').value = '';
+            updateStats();
             renderInterns();
-            alert('Intern added successfully!');
+            closeModal('singleInternModal');
+            alert('✅ Intern added successfully!');
+        }
+
+        function generateAllRotations() {
+            if (interns.length === 0) {
+                alert('⚠️ Please add interns first');
+                return;
+            }
+
+            if (!confirm(`🔄 Generate automatic rotations for ${interns.length} interns?\n\nThis will create optimized 365-day schedules with minimal department overlaps (max 5 interns per department).`)) {
+                return;
+            }
+
+            // Smart rotation generation algorithm
+            let generatedCount = 0;
+            
+            interns.forEach((intern, internIndex) => {
+                if (intern.rotationGenerated) return;
+
+                const startDate = new Date(intern.startDate);
+                let currentDate = new Date(startDate);
+                intern.postings = [];
+
+                // Create shuffled department order for variety
+                const deptOrder = shuffleWithOffset([...departments], internIndex);
+
+                deptOrder.forEach((dept, deptIndex) => {
+                    const fromDate = new Date(currentDate);
+                    currentDate.setDate(currentDate.getDate() + dept.days);
+                    const toDate = new Date(currentDate);
+                    toDate.setDate(toDate.getDate() - 1);
+
+                    intern.postings.push({
+                        id: Date.now() + internIndex * 1000 + deptIndex,
+                        department: dept.name,
+                        fromDate: fromDate.toISOString().split('T')[0],
+                        toDate: toDate.toISOString().split('T')[0],
+                        days: dept.days
+                    });
+                });
+
+                intern.totalDays = 365;
+                intern.rotationGenerated = true;
+                generatedCount++;
+            });
+
+            localStorage.setItem('internData', JSON.stringify(interns));
+            updateStats();
+            renderInterns();
+            alert(`✅ Generated rotations for ${generatedCount} interns!\n\n📊 Each intern has a complete 365-day schedule across all 18 departments.`);
+        }
+
+        function shuffleWithOffset(array, offset) {
+            // Rotate array based on offset to create variety
+            const result = [...array];
+            const rotate = offset % array.length;
+            return [...result.slice(rotate), ...result.slice(0, rotate)];
         }
 
         function renderInterns() {
@@ -392,181 +565,273 @@
                 i.name.toLowerCase().includes(search) || i.regNo.toLowerCase().includes(search)
             );
 
-            document.getElementById('internList').innerHTML = filtered.map(intern => `
+            document.getElementById('internList').innerHTML = filtered.map(intern => {
+                const progress = (intern.totalDays / 365) * 100;
+                const isComplete = intern.totalDays >= 365;
+
+                return `
                 <div class="intern-card">
                     <div class="intern-name">${intern.name}</div>
-                    <div style="color: #7f8c8d; margin-bottom: 10px;">Reg: ${intern.regNo}</div>
+                    <div style="color: #7f8c8d; margin-bottom: 10px;">
+                        Reg: ${intern.regNo} | Start: ${new Date(intern.startDate).toLocaleDateString()}
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(progress, 100)}%">
+                            ${Math.round(progress)}%
+                        </div>
+                    </div>
+
                     <div style="margin: 10px 0;">
                         <strong>Days:</strong> ${intern.totalDays}/365 | 
-                        <strong>Depts:</strong> ${intern.postings.length}/13
+                        <strong>Depts:</strong> ${intern.postings.length}/18
+                        ${intern.rotationGenerated ? '<span style="color: #27ae60;">✓ Auto-Generated</span>' : ''}
                     </div>
-                    ${intern.postings.map(p => `
-                        <div class="posting-item">
-                            <strong>${p.department}</strong><br>
-                            <small>${new Date(p.fromDate).toLocaleDateString()} - ${new Date(p.toDate).toLocaleDateString()}</small>
-                            <small style="color: #27ae60; display: block;">${p.days} days</small>
-                        </div>
-                    `).join('')}
+
+                    <div style="max-height: 150px; overflow-y: auto;">
+                        ${intern.postings.slice(0, 5).map(p => `
+                            <div class="posting-item">
+                                <strong>${p.department}</strong><br>
+                                <small>${new Date(p.fromDate).toLocaleDateString()} - ${new Date(p.toDate).toLocaleDateString()}</small>
+                                <small style="color: #27ae60; display: block;">${p.days} days</small>
+                            </div>
+                        `).join('')}
+                        ${intern.postings.length > 5 ? `<div style="text-align: center; color: #7f8c8d; font-size: 0.9em;">+ ${intern.postings.length - 5} more departments</div>` : ''}
+                    </div>
+
                     <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="openPostingModal(${intern.id})">Add Posting</button>
-                        <button class="btn btn-success" onclick="generateCalendar(${intern.id})">Calendar</button>
-                        <button class="btn btn-danger" onclick="deleteIntern(${intern.id})">Delete</button>
+                        <button class="btn btn-primary" onclick="generateIndividualChart(${intern.id})">📊 Individual Chart</button>
+                        <button class="btn btn-success" onclick="generateCalendar(${intern.id})">📅 Calendar</button>
+                        <button class="btn btn-danger" onclick="deleteIntern(${intern.id})">🗑️ Delete</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        function openPostingModal(internId) {
-            currentInternId = internId;
+        function generateIndividualChart(internId) {
             const intern = interns.find(i => i.id === internId);
-            document.getElementById('modalInfo').innerHTML = `<strong>Adding posting for:</strong> ${intern.name} (${intern.regNo})`;
-            document.getElementById('postingModal').style.display = 'block';
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        function savePosting() {
-            const dept = document.getElementById('postingDept').value;
-            const from = document.getElementById('postingFrom').value;
-            const to = document.getElementById('postingTo').value;
-
-            if (!dept || !from || !to) {
-                alert('Please fill all fields');
+            if (!intern || !intern.postings.length) {
+                alert('⚠️ No postings found for this intern');
                 return;
             }
 
-            const intern = interns.find(i => i.id === currentInternId);
-            if (intern.postings.some(p => p.department === dept)) {
-                alert('Department already posted');
+            const html = generateChartHTML([intern], false);
+            downloadFile(html, `Individual_Chart_${intern.name.replace(/\s/g, '_')}.html`);
+            alert('✅ Individual chart downloaded!');
+        }
+
+        function generateMasterChart() {
+            if (!interns.length || !interns.some(i => i.postings.length)) {
+                alert('⚠️ No interns with postings found');
                 return;
             }
 
-            const days = Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
-            intern.postings.push({ id: Date.now(), department: dept, fromDate: from, toDate: to, days });
-            intern.totalDays = intern.postings.reduce((sum, p) => sum + p.days, 0);
-
-            localStorage.setItem('internData', JSON.stringify(interns));
-            closeModal('postingModal');
-            renderInterns();
-            alert('Posting added!');
+            const html = generateChartHTML(interns.filter(i => i.postings.length), true);
+            downloadFile(html, `Master_Posting_Chart_${new Date().toISOString().split('T')[0]}.html`);
+            alert('✅ Master chart generated for all interns!');
         }
 
-        function deleteIntern(id) {
-            if (confirm('Delete this intern?')) {
-                interns = interns.filter(i => i.id !== id);
-                localStorage.setItem('internData', JSON.stringify(interns));
-                renderInterns();
-            }
-        }
+        function generateChartHTML(internsList, isMaster) {
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <title>${isMaster ? 'Master Posting Chart' : 'Individual Posting Chart'}</title>
+            <style>
+                body { font-family: Arial; padding: 30px; }
+                h1, h2 { text-align: center; color: #2c3e50; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; page-break-inside: avoid; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.9em; }
+                th { background: #3498db; color: white; font-weight: 600; }
+                .dept-code { background: #e3f2fd; padding: 3px 8px; border-radius: 3px; font-weight: 600; }
+                @media print { .no-print { display: none; } }
+            </style></head><body>
+            <h1>JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL, VARUR</h1>
+            <h2>${isMaster ? 'MASTER POSTING CHART - ALL INTERNS' : 'INDIVIDUAL POSTING CHART'}</h2>
+            <p style="text-align: center; color: #7f8c8d;">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>`;
 
-        function renderHODPostings() {
-            const relevant = [];
-            interns.forEach(intern => {
-                intern.postings.forEach(posting => {
-                    if (posting.department === currentHOD.dept) {
-                        relevant.push({ intern, posting });
-                    }
+            internsList.forEach((intern, idx) => {
+                html += `
+                <div style="margin: 30px 0; page-break-inside: avoid;">
+                    <h3 style="background: #3498db; color: white; padding: 15px; border-radius: 8px;">
+                        ${intern.name} (${intern.regNo}) - Start Date: ${new Date(intern.startDate).toLocaleDateString()}
+                    </h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">S.No</th>
+                                <th>Department</th>
+                                <th>Code</th>
+                                <th>From Date</th>
+                                <th>To Date</th>
+                                <th>Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                intern.postings.forEach((posting, pIdx) => {
+                    const dept = departments.find(d => d.name === posting.department);
+                    html += `
+                        <tr>
+                            <td style="text-align: center;">${pIdx + 1}</td>
+                            <td><strong>${posting.department}</strong></td>
+                            <td><span class="dept-code">${dept ? dept.code : 'N/A'}</span></td>
+                            <td>${new Date(posting.fromDate).toLocaleDateString()}</td>
+                            <td>${new Date(posting.toDate).toLocaleDateString()}</td>
+                            <td style="text-align: center; font-weight: 600;">${posting.days}</td>
+                        </tr>`;
                 });
+
+                html += `
+                            <tr style="background: #f8f9fa; font-weight: bold;">
+                                <td colspan="5" style="text-align: right;">TOTAL DAYS:</td>
+                                <td style="text-align: center; color: ${intern.totalDays >= 365 ? '#27ae60' : '#e74c3c'};">${intern.totalDays}/365</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
             });
 
-            document.getElementById('hodPostings').innerHTML = relevant.length ? relevant.map(r => `
-                <div class="posting-item">
-                    <strong>${r.intern.name}</strong> (${r.intern.regNo})<br>
-                    <small>${new Date(r.posting.fromDate).toLocaleDateString()} - ${new Date(r.posting.toDate).toLocaleDateString()}</small>
-                    <small style="color: #27ae60; display: block;">${r.posting.days} days</small>
+            html += `
+                <div style="text-align: center; margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 10px;">
+                    <p style="font-weight: bold; font-size: 1.1em;">THIS IS AN OFFICIAL DOCUMENT OF THE COLLEGE</p>
+                    <p style="margin-top: 10px; color: #7f8c8d;">Official posting schedule for internship completion.</p>
                 </div>
-            `).join('') : '<p>No postings found</p>';
+            </body></html>`;
+
+            return html;
         }
 
         function generateCalendar(internId) {
             const intern = interns.find(i => i.id === internId);
             if (!intern || !intern.postings.length) {
-                alert('No postings found');
+                alert('⚠️ No postings found');
                 return;
             }
 
             const html = generateCalendarHTML([intern]);
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Calendar_${intern.name.replace(/\s/g, '_')}.html`;
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('Calendar generated!');
+            downloadFile(html, `Calendar_${intern.name.replace(/\s/g, '_')}.html`);
+            alert('✅ Calendar generated!');
         }
 
         function generateMasterCalendar() {
-            if (!interns.length) {
-                alert('No interns found');
+            if (!interns.length || !interns.some(i => i.postings.length)) {
+                alert('⚠️ No interns with postings found');
                 return;
             }
 
-            const html = generateCalendarHTML(interns.filter(i => i.postings.length > 0));
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Master_Calendar_${new Date().toISOString().split('T')[0]}.html`;
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('Master calendar generated!');
+            const html = generateCalendarHTML(interns.filter(i => i.postings.length));
+            downloadFile(html, `Master_Calendar_${new Date().toISOString().split('T')[0]}.html`);
+            alert('✅ Master calendar generated!');
         }
 
         function generateCalendarHTML(internsList) {
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const colors = ['#e3f2fd','#f3e5f5','#e8f5e9','#fff3e0','#fce4ec','#e0f2f1','#f1f8e9','#fff9c4','#ede7f6','#e8eaf6','#ffebee','#f3e5f5','#e1f5fe'];
+            const colors = ['#e3f2fd','#f3e5f5','#e8f5e9','#fff3e0','#fce4ec','#e0f2f1','#f1f8e9','#fff9c4','#ede7f6','#e8eaf6','#ffebee','#f3e5f5','#e1f5fe','#fce4ec','#f9fbe7','#e0f7fa','#fef9e7','#f1f8e9'];
 
             let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Posting Calendar</title>
-            <style>body{font-family:Arial;padding:30px;} table{width:100%;border-collapse:collapse;margin:20px 0;} th,td{border:1px solid #ddd;padding:10px;text-align:center;} th{background:#f5f5f5;} .posting{background:#e3f2fd;padding:5px;margin:2px 0;border-radius:3px;font-size:0.85em;}</style>
-            </head><body>
-            <h1 style="text-align:center;">JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL, VARUR</h1>
-            <h2 style="text-align:center;color:#3498db;">POSTING CALENDAR</h2>`;
+            <style>
+                body { font-family: Arial; padding: 20px; }
+                h1, h2 { text-align: center; color: #2c3e50; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; page-break-inside: avoid; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: center; vertical-align: top; }
+                th { background: #3498db; color: white; font-weight: 600; }
+                .posting-cell { background: #e3f2fd; padding: 4px; margin: 2px 0; border-radius: 3px; font-size: 0.8em; }
+                .dept-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 15px 0; }
+                .legend-item { font-size: 0.85em; padding: 5px; }
+            </style></head><body>
+            <h1>JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL, VARUR</h1>
+            <h2>POSTING CALENDAR - MONTH-BY-MONTH VIEW</h2>
+            <p style="text-align: center; color: #7f8c8d;">Generated: ${new Date().toLocaleDateString()}</p>`;
 
             internsList.forEach(intern => {
-                html += `<div style="margin:30px 0;page-break-inside:avoid;">
-                <h3 style="background:#3498db;color:white;padding:15px;border-radius:8px;">${intern.name} (${intern.regNo})</h3>
-                <table><thead><tr>${months.map(m => `<th>${m}</th>`).join('')}</tr></thead><tbody><tr>`;
+                const years = [...new Set(intern.postings.flatMap(p => [
+                    new Date(p.fromDate).getFullYear(), 
+                    new Date(p.toDate).getFullYear()
+                ]))].sort();
 
-                const years = [...new Set(intern.postings.flatMap(p => [new Date(p.fromDate).getFullYear(), new Date(p.toDate).getFullYear()]))];
-                
-                months.forEach((m, mi) => {
-                    let cell = '';
-                    intern.postings.forEach((p, pi) => {
-                        const start = new Date(p.fromDate);
-                        const end = new Date(p.toDate);
-                        const monthStart = new Date(years[0], mi, 1);
-                        const monthEnd = new Date(years[0], mi + 1, 0);
-                        
-                        if (start <= monthEnd && end >= monthStart) {
-                            const code = deptCodes[p.department];
-                            const color = colors[pi % colors.length];
-                            const fromDay = start.getMonth() === mi ? start.getDate() : 1;
-                            const toDay = end.getMonth() === mi ? end.getDate() : monthEnd.getDate();
-                            cell += `<div class="posting" style="background:${color};"><strong>${code}</strong><br>${fromDay}-${toDay}</div>`;
-                        }
+                html += `
+                <div style="margin: 30px 0; page-break-inside: avoid;">
+                    <h3 style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 15px; border-radius: 8px;">
+                        ${intern.name} (${intern.regNo}) - Start: ${new Date(intern.startDate).toLocaleDateString()}
+                    </h3>`;
+
+                years.forEach(year => {
+                    html += `
+                    <h4 style="color: #2c3e50; margin: 15px 0;">Year ${year}</h4>
+                    <table>
+                        <thead>
+                            <tr>${months.map(m => `<th>${m}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody><tr>`;
+
+                    months.forEach((m, mi) => {
+                        let cellContent = '';
+                        intern.postings.forEach((p, pi) => {
+                            const start = new Date(p.fromDate);
+                            const end = new Date(p.toDate);
+                            const monthStart = new Date(year, mi, 1);
+                            const monthEnd = new Date(year, mi + 1, 0);
+
+                            if (start <= monthEnd && end >= monthStart) {
+                                const dept = departments.find(d => d.name === p.department);
+                                const code = dept ? dept.code : 'N/A';
+                                const color = colors[pi % colors.length];
+                                const fromDay = start.getMonth() === mi && start.getFullYear() === year ? start.getDate() : 1;
+                                const toDay = end.getMonth() === mi && end.getFullYear() === year ? end.getDate() : monthEnd.getDate();
+
+                                cellContent += `<div class="posting-cell" style="background: ${color};"><strong>${code}</strong><br>${fromDay}-${toDay}</div>`;
+                            }
+                        });
+
+                        html += `<td style="height: 100px;">${cellContent || '-'}</td>`;
                     });
-                    html += `<td style="vertical-align:top;height:80px;">${cell || '-'}</td>`;
+
+                    html += '</tr></tbody></table>';
                 });
 
-                html += '</tr></tbody></table></div>';
+                // Legend
+                html += `
+                <div class="dept-legend">
+                    ${intern.postings.map(p => {
+                        const dept = departments.find(d => d.name === p.department);
+                        return `<div class="legend-item"><strong>${dept ? dept.code : 'N/A'}:</strong> ${p.department}</div>`;
+                    }).join('')}
+                </div>
+                </div>`;
             });
 
-            html += '<p style="text-align:center;margin-top:30px;"><strong>THIS IS AN OFFICIAL DOCUMENT OF THE COLLEGE</strong></p></body></html>';
+            html += `
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background: #ecf0f1; border-radius: 10px;">
+                <p style="font-weight: bold;">THIS IS AN OFFICIAL DOCUMENT OF THE COLLEGE</p>
+            </div>
+            </body></html>`;
+
             return html;
         }
 
+        function deleteIntern(id) {
+            if (confirm('🗑️ Delete this intern and all postings?')) {
+                interns = interns.filter(i => i.id !== id);
+                localStorage.setItem('internData', JSON.stringify(interns));
+                updateStats();
+                renderInterns();
+                alert('✅ Intern deleted');
+            }
+        }
+
         function exportAllData() {
-            const blob = new Blob([JSON.stringify({ interns, exported: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+            const data = {
+                interns,
+                exported: new Date().toISOString(),
+                version: '2.0',
+                college: 'JAIN AGM AYURVEDIC MEDICAL COLLEGE & HOSPITAL, VARUR'
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `Intern_Data_Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            alert('Data exported successfully! Save this file in a safe location.');
+            alert('✅ Data exported! Save this file safely.');
         }
 
         function importData() {
@@ -582,29 +847,50 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     if (data.interns && Array.isArray(data.interns)) {
-                        if (confirm(`This will replace all current data with ${data.interns.length} interns from the backup file. Continue?`)) {
+                        if (confirm(`📥 Import ${data.interns.length} interns? This will replace current data.`)) {
                             interns = data.interns;
                             localStorage.setItem('internData', JSON.stringify(interns));
+                            updateStats();
                             renderInterns();
-                            alert('Data imported successfully! All interns and postings have been restored.');
+                            alert('✅ Data imported successfully!');
                         }
                     } else {
-                        alert('Invalid file format. Please select a valid backup JSON file.');
+                        alert('❌ Invalid file format');
                     }
                 } catch (error) {
-                    alert('Error reading file. Please ensure you selected a valid JSON backup file.');
-                    console.error('Import error:', error);
+                    alert('❌ Error reading file');
                 }
             };
             reader.readAsText(file);
-            
-            // Reset file input so the same file can be selected again if needed
             event.target.value = '';
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function updateStats() {
+            document.getElementById('totalInterns').textContent = interns.length;
+            document.getElementById('completedInterns').textContent = interns.filter(i => i.totalDays >= 365).length;
+            document.getElementById('pendingInterns').textContent = interns.filter(i => i.totalDays < 365).length;
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         window.onclick = e => {
             if (e.target.className === 'modal') e.target.style.display = 'none';
         };
+
+        // Initialize
+        updateStats();
     </script>
 </body>
 </html>
