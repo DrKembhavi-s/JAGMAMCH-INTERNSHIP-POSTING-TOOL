@@ -285,6 +285,7 @@
                         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
                         <button class="btn btn-primary" onclick="generateMasterChart()">📊 Master Chart (All Interns)</button>
                         <button class="btn btn-secondary" onclick="generateMasterCalendar()">📅 Master Calendar</button>
+                        <button class="btn btn-warning" onclick="debugInterns()">🔍 Debug Check</button>
                     </div>
                     
                     <div class="intern-list" id="internList"></div>
@@ -537,43 +538,62 @@
                 return;
             }
 
+            console.log('Starting rotation generation for', internsToGenerate.length, 'interns');
             let generatedCount = 0;
             
             internsToGenerate.forEach((intern, internIndex) => {
+                console.log(`Generating rotation for ${intern.name} (${intern.regNo})`);
+                
                 const startDate = new Date(intern.startDate);
                 let currentDate = new Date(startDate);
                 intern.postings = [];
 
                 // Create shuffled department order for variety
                 const deptOrder = shuffleWithOffset([...departments], internIndex);
+                console.log(`Department order for ${intern.name}:`, deptOrder.map(d => d.code));
 
                 deptOrder.forEach((dept, deptIndex) => {
                     const fromDate = new Date(currentDate);
                     const toDate = new Date(currentDate);
                     toDate.setDate(toDate.getDate() + dept.days - 1);
 
-                    intern.postings.push({
+                    const posting = {
                         id: Date.now() + internIndex * 10000 + deptIndex * 100 + Math.random(),
                         department: dept.name,
                         fromDate: fromDate.toISOString().split('T')[0],
                         toDate: toDate.toISOString().split('T')[0],
                         days: dept.days
-                    });
+                    };
+
+                    intern.postings.push(posting);
+                    console.log(`  Added ${dept.code}: ${posting.fromDate} to ${posting.toDate} (${dept.days} days)`);
 
                     // Move to next department start date
                     currentDate.setDate(currentDate.getDate() + dept.days);
                 });
 
-                intern.totalDays = 365;
+                intern.totalDays = intern.postings.reduce((sum, p) => sum + p.days, 0);
                 intern.rotationGenerated = true;
                 generatedCount++;
+                
+                console.log(`✓ ${intern.name}: ${intern.postings.length} departments, ${intern.totalDays} total days`);
             });
 
+            // Save to localStorage
             localStorage.setItem('internData', JSON.stringify(interns));
+            console.log('Saved to localStorage. Total interns:', interns.length);
+            
+            // Reload from localStorage to verify
+            interns = JSON.parse(localStorage.getItem('internData') || '[]');
+            console.log('Reloaded from localStorage. Verifying...');
+            interns.forEach(i => {
+                console.log(`  ${i.name}: ${i.postings.length} postings, ${i.totalDays} days`);
+            });
+            
             updateStats();
             renderInterns();
             
-            alert(`✅ SUCCESS! Generated rotations for ${generatedCount} interns!\n\n📊 Each intern now has:\n• Complete 365-day schedule\n• All 18 departments assigned\n• Dates from their start date\n\n📅 TO VIEW CALENDARS:\n1. Scroll down to see intern cards\n2. Click "📅 Calendar" button on any intern\n3. Or click "📊 Individual Chart" for table view\n4. Or click "📊 Master Chart (All Interns)" at top for everyone`);
+            alert(`✅ SUCCESS! Generated rotations for ${generatedCount} interns!\n\n📊 Each intern now has:\n• Complete 365-day schedule\n• All 18 departments assigned\n• Total: ${interns[0]?.totalDays || 365} days\n\n📅 TO VIEW CALENDARS:\n1. Scroll down to see intern cards\n2. Click "📅 Calendar" button on any intern\n3. Or click "📊 Individual Chart" for table view\n\nIf you still see 0 postings, please refresh the page and check again.`);
         }
 
         function shuffleWithOffset(array, offset) {
@@ -897,6 +917,30 @@
             a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        function debugInterns() {
+            console.log('=== DEBUG INTERNS ===');
+            console.log('Total interns in memory:', interns.length);
+            
+            let report = `📊 DEBUG REPORT\n\nTotal Interns: ${interns.length}\n\n`;
+            
+            interns.forEach((intern, idx) => {
+                const postingCount = intern.postings ? intern.postings.length : 0;
+                const totalDays = intern.totalDays || 0;
+                console.log(`Intern ${idx + 1}:`, intern.name, '- Postings:', postingCount, '- Days:', totalDays);
+                report += `${idx + 1}. ${intern.name} (${intern.regNo})\n`;
+                report += `   Start Date: ${intern.startDate}\n`;
+                report += `   Postings: ${postingCount}/18\n`;
+                report += `   Total Days: ${totalDays}/365\n`;
+                report += `   Rotation Generated: ${intern.rotationGenerated ? 'Yes' : 'No'}\n\n`;
+            });
+            
+            alert(report);
+            
+            // Also save to localStorage to ensure it's persisted
+            localStorage.setItem('internData', JSON.stringify(interns));
+            console.log('Saved current state to localStorage');
         }
 
         function updateStats() {
