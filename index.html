@@ -526,16 +526,20 @@
                 return;
             }
 
-            if (!confirm(`🔄 Generate automatic rotations for ${interns.length} interns?\n\nThis will create optimized 365-day schedules with minimal department overlaps (max 5 interns per department).`)) {
+            const internsToGenerate = interns.filter(i => !i.rotationGenerated || i.postings.length === 0);
+            
+            if (internsToGenerate.length === 0) {
+                alert('ℹ️ All interns already have rotations generated!\n\nTo regenerate, delete and re-add interns, or delete their postings manually.');
                 return;
             }
 
-            // Smart rotation generation algorithm
+            if (!confirm(`🔄 Generate automatic rotations for ${internsToGenerate.length} interns?\n\n✓ Creates complete 365-day schedules\n✓ All 18 departments included\n✓ Minimizes overlaps (max 5 per dept)\n✓ Uses individual start dates\n\nProceed?`)) {
+                return;
+            }
+
             let generatedCount = 0;
             
-            interns.forEach((intern, internIndex) => {
-                if (intern.rotationGenerated) return;
-
+            internsToGenerate.forEach((intern, internIndex) => {
                 const startDate = new Date(intern.startDate);
                 let currentDate = new Date(startDate);
                 intern.postings = [];
@@ -545,17 +549,19 @@
 
                 deptOrder.forEach((dept, deptIndex) => {
                     const fromDate = new Date(currentDate);
-                    currentDate.setDate(currentDate.getDate() + dept.days);
                     const toDate = new Date(currentDate);
-                    toDate.setDate(toDate.getDate() - 1);
+                    toDate.setDate(toDate.getDate() + dept.days - 1);
 
                     intern.postings.push({
-                        id: Date.now() + internIndex * 1000 + deptIndex,
+                        id: Date.now() + internIndex * 10000 + deptIndex * 100 + Math.random(),
                         department: dept.name,
                         fromDate: fromDate.toISOString().split('T')[0],
                         toDate: toDate.toISOString().split('T')[0],
                         days: dept.days
                     });
+
+                    // Move to next department start date
+                    currentDate.setDate(currentDate.getDate() + dept.days);
                 });
 
                 intern.totalDays = 365;
@@ -566,7 +572,8 @@
             localStorage.setItem('internData', JSON.stringify(interns));
             updateStats();
             renderInterns();
-            alert(`✅ Generated rotations for ${generatedCount} interns!\n\n📊 Each intern has a complete 365-day schedule across all 18 departments.`);
+            
+            alert(`✅ SUCCESS! Generated rotations for ${generatedCount} interns!\n\n📊 Each intern now has:\n• Complete 365-day schedule\n• All 18 departments assigned\n• Dates from their start date\n\n📅 TO VIEW CALENDARS:\n1. Scroll down to see intern cards\n2. Click "📅 Calendar" button on any intern\n3. Or click "📊 Individual Chart" for table view\n4. Or click "📊 Master Chart (All Interns)" at top for everyone`);
         }
 
         function shuffleWithOffset(array, offset) {
